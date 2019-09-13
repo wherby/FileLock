@@ -1,3 +1,4 @@
+#https://github.com/dmfrey/FileLock/blob/master/filelock/filelock.py
 import os
 import time
 import errno
@@ -11,18 +12,43 @@ class FileLock(object):
         compatible as it doesn't rely on msvcrt or fcntl for the locking.
     """
  
-    def __init__(self, file_name, timeout=10, delay=.05):
+    def __init__(self, file_name, timeout=10, delay=.05, logtimefile = "logtime", lockvanishtime = 60, lockfolder=None):
         """ Prepare the file locker. Specify the file to lock and optionally
             the maximum timeout and the delay between each attempt to lock.
         """
         if timeout is not None and delay is None:
             raise ValueError("If timeout is not None, then delay must not be None.")
         self.is_locked = False
-        self.lockfile = os.path.join(os.getcwd(), "%s.lock" % file_name)
+        self.lockfolder = os.getcwd()
+        if lockfolder != None:
+            self.lockfolder = lockfolder
+        self.lockfile = os.path.join(self.lockfolder, "%s.lock" % file_name)
+        print(self.lockfile)
+        print(lockfolder)
         self.file_name = file_name
         self.timeout = timeout
         self.delay = delay
- 
+        self.logtimefile =os.path.join(self.lockfolder, "%s.lock" % logtimefile)  
+        self.lockvanishtime = lockvanishtime
+    
+    def readLastTime(self):
+        try:
+            with open(self.logtimefile,"r+") as f:
+                time = f.read()
+                return float(time)
+        except Exception as inst:
+            print("read time failed")
+            print(inst)
+            pass
+
+    def recordLockTime(self):
+        try:
+            with open(self.logtimefile, "w") as f:
+                f.writelines(str(time.time()))
+        except Exception as inst:
+            print("record lock failed")
+            print(inst)
+            pass
  
     def acquire(self):
         """ Acquire the lock, if possible. If the lock is in use, it check again
@@ -35,6 +61,7 @@ class FileLock(object):
             try:
                 self.fd = os.open(self.lockfile, os.O_CREAT|os.O_EXCL|os.O_RDWR)
                 self.is_locked = True #moved to ensure tag only when locked
+                self.recordLockTime()
                 break;
             except OSError as e:
                 if e.errno != errno.EEXIST:
@@ -42,6 +69,9 @@ class FileLock(object):
                 if self.timeout is None:
                     raise FileLockException("Could not acquire lock on {}".format(self.file_name))
                 if (time.time() - start_time) >= self.timeout:
+                    lastTime =self.readLastTime()
+                    if (time.time() - lastTime) > self.lockvanishtime:
+                        os.remove(self.lockfile)
                     raise FileLockException("Timeout occured.")
                 time.sleep(self.delay)
 #        self.is_locked = True

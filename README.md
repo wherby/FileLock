@@ -9,3 +9,9 @@ FileLock
     
 
     Originally posted at http://www.evanfosmark.com/2009/01/cross-platform-file-locking-support-in-python/
+
+====
+Self healing feature 
+====
+
+[Pessimist’s file lock](./SELFHEALING.md)
