@@ -1,4 +1,4 @@
-#Pessimist’s file lock
+# Pessimist’s file lock
 
 For software design when needs a global lock cross process, the file lock will be the simplest choose. While both Posix based system(Linux, Ubuntu, Macos, etc.) and Windows system have different file lock function, then the universal lock can be write as below:
 
@@ -30,14 +30,14 @@ from filelock import FileLock
 
 with FileLock("myfile.txt"):
     # work with the file as it is now locked
-print("Lock acquired.")
+    print("Lock acquired.")
 
 ```
 
 The FileLock use a universal way to create a global lock which is to detect weather specified file is on disk or not as below:
 
 ``` Python 
-…
+
     def acquire(self):
         """ Acquire the lock, if possible. If the lock is in use, it check again
             every `wait` seconds. It does this until it either gets the lock or
@@ -70,7 +70,7 @@ The FileLock use a universal way to create a global lock which is to detect weat
             os.close(self.fd)
             os.unlink(self.lockfile)
             self.is_locked = False
-…
+
 ```
 
 If the lockfile is not created then the lock could be acquired and the lockfile is created, and when release the lock, the file is removed from disk.
