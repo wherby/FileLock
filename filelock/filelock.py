@@ -30,6 +30,7 @@ class FileLock(object):
         self.delay = delay
         self.logtimefile =os.path.join(self.lockfolder, "%s.lock" % logtimefile)  
         self.lockvanishtime = lockvanishtime
+        self.timeoutlogfile = os.path.join(self.lockfolder, "locktimeout.log" )  
     
     def readLastTime(self):
         try:
@@ -70,7 +71,11 @@ class FileLock(object):
                     raise FileLockException("Could not acquire lock on {}".format(self.file_name))
                 if (time.time() - start_time) >= self.timeout:
                     lastTime =self.readLastTime()
+                    with open(self.timeoutlogfile, "a") as f2:
+                            f2.writelines("Lock timeout at %s \n"%str(time.time()))
                     if (time.time() - lastTime) > self.lockvanishtime:
+                        with open(self.timeoutlogfile, "a") as f2:
+                            f2.writelines("Lock timeout clean at %s \n"%str(time.time()))
                         os.remove(self.lockfile)
                     raise FileLockException("Timeout occured.")
                 time.sleep(self.delay)
