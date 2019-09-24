@@ -40,7 +40,8 @@ class FileLock(object):
         except Exception as inst:
             print("read time failed")
             print(inst)
-            pass
+            return 0
+            
 
     def recordLockTime(self):
         try:
